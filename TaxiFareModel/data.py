@@ -8,6 +8,10 @@ def get_data(nrows=10_000):
     df = pd.read_csv(AWS_BUCKET_PATH, nrows=nrows)
     return df
 
+def get_local_data(file_name):
+
+    df = pd.read_csv("../raw_data/" + file_name)
+    return df
 
 def clean_data(df, test=False):
     df = df.dropna(how='any', axis='rows')

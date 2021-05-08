@@ -59,3 +59,22 @@ pypi_test:
 
 pypi:
 	@twine upload dist/* -u $(PYPI_USERNAME)
+
+# ----------------------------------
+#      Google Cloud Platform
+# ----------------------------------
+
+# project id - replace with your Project's ID
+PROJECT_ID=wagon-bootcamp-313018
+
+# bucket name - follow the convention of wagon-ml-[YOUR_LAST_NAME]-[BATCH_NUMBER]
+BUCKET_NAME=wagon-ml-Pereira-566
+
+# Choose your region https://cloud.google.com/storage/docs/locations#available_locations
+REGION=europe-west1
+
+set_project:
+	@gcloud config set project ${PROJECT_ID}
+
+create_bucket:
+	@gsutil mb -l ${REGION} -p ${PROJECT_ID} gs://${BUCKET_NAME}

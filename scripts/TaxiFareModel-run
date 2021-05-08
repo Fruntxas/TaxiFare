@@ -1,2 +1,61 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
+
+from TaxiFareModel.trainer import *
+
+from sklearn.neighbors import KNeighborsRegressor
+from sklearn.ensemble import RandomForestRegressor,GradientBoostingRegressor,StackingRegressor,VotingRegressor,AdaBoostRegressor
+from sklearn.svm import SVR
+from sklearn.linear_model import SGDRegressor
+from sklearn.tree import DecisionTreeRegressor
+
+from xgboost import XGBRegressor
+
+df = get_local_data("train_10k.csv")#get_data(nrows=10000)
+print("Data retrieved")
+df = clean_data(df)
+print("Data cleaned")
+# set X and y
+X = df.drop(columns='fare_amount')
+y = df.fare_amount
+# hold out
+X_train, X_test, y_train, y_test = train_test_split(X,y, test_size=0.1,random_state = 42)
+print("Holdout performed")
+
+
+estimators = [SVR()
+                ,RandomForestRegressor()
+                ,GradientBoostingRegressor()
+                #,DecisionTreeRegressor() --> 4.6
+                #,XGBRegressor() --> 3.5
+                #,KNeighborsRegressor() --> 4
+                #,SVR(kernel='linear') --> 11
+                #,AdaBoostRegressor() --> 14
+                # ,VotingRegressor(estimators = [("RF", RandomForestRegressor())
+                #                               ,("GB", GradientBoostingRegressor())
+                #                               ,("SVR",SVR())])
+                # ,StackingRegressor(estimators = [("RF", RandomForestRegressor())
+                #                               ,("GB", GradientBoostingRegressor())
+                #                               ,("SVR",SVR())])
+                ]
+
+for est in estimators:
+    # build pipeline
+    t = Trainer(X_train,y_train,est)
+    t.set_pipeline()
+
+    # train the pipeline
+    print(f"Training {est}")
+    t.run()
+
+    # evaluate the pipeline
+    print(f"RMSE for {est} = {t.evaluate(X_test, y_test)}")
+    print(" ")
+    
+    t.save_model()
+    #t.mlflow_log_param("Model",est)
+    #t.mlflow_log_metric("rmse", t.evaluate(X_test, y_test))
+
+print("Training Done")
+    
+
