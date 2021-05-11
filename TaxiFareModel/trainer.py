@@ -8,11 +8,12 @@ from sklearn.model_selection import train_test_split
 
 from TaxiFareModel.encoders import DistanceTransformer,TimeFeaturesEncoder
 from TaxiFareModel.utils import compute_rmse
-from TaxiFareModel.data import get_data,clean_data, get_local_data
+from TaxiFareModel.data import get_data,clean_data, get_local_data, get_gcp_data
 
 import pandas as pd
 import mlflow
 from mlflow.tracking import MlflowClient
+from google.cloud import storage
 
 from memoized_property import memoized_property
 
@@ -24,6 +25,9 @@ EXPERIMENT_NAME = f"TaxifareModel_{myname}"
 
 filepath = "/home/fruntxas/code/Fruntxas/TaxiFareModel/Models/"
 
+BUCKET_NAME = 'wagon-ml-pereira-566'
+STORAGE_LOCATION = 'model.joblib'
+
 class Trainer():
 
     def __init__(self, X, y, estimator):
@@ -34,7 +38,7 @@ class Trainer():
         self.pipeline = None
         self.X = X
         self.y = y
-        self.estimator = estimator
+        self.estimator = RandomForestRegressor()
 
     def set_pipeline(self):
         """defines the pipeline as a class attribute"""
@@ -56,13 +60,9 @@ class Trainer():
         self.pipeline = Pipeline(steps=[('feat_eng_bloc', feat_eng_bloc),
                                     ('regressor', self.estimator)])
     
-        #return self
-
     def run(self):
         """set and train the pipeline"""
         self.pipeline.fit(self.X,self.y)
-
-        #return self
 
     def evaluate(self, X_test, y_test):
         '''prints and returns the value of the RMSE'''
@@ -70,13 +70,24 @@ class Trainer():
         y_pred = self.pipeline.predict(X_test)
         
         self.rmse = compute_rmse(y_pred, y_true=y_test)
-        return self.rmse
-    
-    def save_model(self):
+   
         self.mlflow_log_metric("rmse", self.rmse)
-        self.mlflow_log_param("Model",self.estimator)
-        joblib.dump(self,filepath+str(self.estimator))
-        print("Model Saved")
+        self.mlflow_log_param("Model","RandomForestRegressor")
+
+        return self.rmse
+
+    def save_model(self):
+        """method that saves the model into a .joblib file and uploads it on Google Storage /models folder
+        HINTS : use joblib library and google-cloud-storage"""
+
+        # saving the trained model to disk is mandatory to then beeing able to upload it to storage
+        # Implement here
+        joblib.dump(self.pipeline, 'model.joblib')
+        print("saved model.joblib locally")
+
+        # Implement here
+        upload_model_to_gcp()
+        print(f"uploaded model.joblib to gcp cloud storage under \n => {STORAGE_LOCATION}")
 
     @memoized_property
     def mlflow_client(self):
@@ -99,11 +110,21 @@ class Trainer():
 
     def mlflow_log_metric(self, key, value):
         self.mlflow_client.log_metric(self.mlflow_run.info.run_id, key, value)
-    
+
+def upload_model_to_gcp():
+
+    client = storage.Client()
+    bucket = client.bucket(BUCKET_NAME)
+    blob = bucket.blob(STORAGE_LOCATION)
+    blob.upload_from_filename('model.joblib')
 
 if __name__ == "__main__":
     # store the data in a DataFrame
-    df = get_data(nrows=10000)
+
+    #df = get_data(nrows=10000)
+    df = get_gcp_data() # 1000 rows
+
+    # clean data
     df = clean_data(df)
 
     # set X and y
@@ -114,7 +135,7 @@ if __name__ == "__main__":
     X_train, X_test, y_train, y_test = train_test_split(X,y, test_size=0.1)
 
     # build pipeline
-    trainer = Trainer(X_train,y_train)
+    trainer = Trainer(X_train,y_train,RandomForestRegressor())
     trainer.set_pipeline()
 
     # train the pipeline

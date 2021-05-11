@@ -11,7 +11,8 @@ from sklearn.tree import DecisionTreeRegressor
 
 from xgboost import XGBRegressor
 
-df = get_local_data("train_10k.csv")#get_data(nrows=10000)
+#df = get_local_data("train_10k.csv")#get_data(nrows=10000)
+df = get_gcp_data() # 1000 rows
 print("Data retrieved")
 df = clean_data(df)
 print("Data cleaned")
@@ -24,8 +25,8 @@ print("Holdout performed")
 
 
 estimators = [SVR()
-                ,RandomForestRegressor()
-                ,GradientBoostingRegressor()
+                #,RandomForestRegressor()
+                #,GradientBoostingRegressor()
                 #,DecisionTreeRegressor() --> 4.6
                 #,XGBRegressor() --> 3.5
                 #,KNeighborsRegressor() --> 4

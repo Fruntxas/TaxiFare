@@ -3,11 +3,12 @@ pip>=9
 setuptools>=26
 twine
 wheel>=0.29
+six==1.14.0
 
 # data science
-numpy
-pandas
-scikit-learn
+numpy==1.18.5
+pandas==1.0.4
+scikit-learn==0.22
 
 # tests/linter
 black
@@ -19,7 +20,7 @@ yapf
 # API
 gcsfs
 google-cloud-storage
-mlflow
+mlflow==1.16.0
 s3fs
 
 # utilities
@@ -27,3 +28,9 @@ six>=1.14
 joblib
 memoized-property
 termcolor
+
+cmdstanpy
+
+fastapi
+uvicorn
+
